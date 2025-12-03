@@ -3,43 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { STORAGE_KEYS } from '@/lib/localStorage'; // Keep for KV key name
 import { setUpdatedAt } from '@/lib/storageMeta';
 import { requireAdmin } from '@/lib/adminAuth';
-
-// Contact interface
-export interface Contact {
-  email: string;
-  emailSecondary?: string;
-  phone?: string;
-  phoneAlt?: string;
-  fax?: string;
-  location?: string;
-  poBox?: string;
-  website?: string;
-  linkedinUrl?: string;
-  facebookUrl?: string;
-  instagramUrl?: string;
-  twitterUrl?: string;
-  showContactForm: boolean;
-  emailNotifications: boolean;
-}
+import { defaultContactData, type Contact } from '@/lib/contact';
 
 const REDIS_CONTACT_KEY = STORAGE_KEYS.CONTACT;
-
-// Default contact data to use when missing
-export const defaultContactData = {
-  email: 'vetcaresyria@scs-net.org',
-  emailSecondary: 'vetcaresyria@gmail.com',
-  phone: '00963-11-5852338',
-  phoneAlt: '00963-11-5852339',
-  fax: '00963-11-5852340',
-  location: 'Syria, Damascus suburb, Adra industrial city, chemical zone, building No 710',
-  poBox: '8446, Damascus, Syria',
-  website: 'www.vetcaresyria.com',
-  linkedinUrl: '',
-  facebookUrl: '',
-  instagramUrl: '',
-  showContactForm: true,
-  emailNotifications: true
-};
 
 // GET Handler: Fetch contact data from Redis
 export async function GET() {

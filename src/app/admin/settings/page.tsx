@@ -3,28 +3,10 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Save, Globe, ArrowUpDown } from 'lucide-react';
-
-interface SiteSettings {
-  siteName: string;
-  siteDescription: string;
-  siteLanguage: string;
-  heroNote?: string;
-  primaryCta?: string;
-  maxItemsPerPage: number;
-}
-
-// Moved outside the component
-const defaultSettings: SiteSettings = {
-  siteName: 'VetcareSyria',
-  siteDescription: 'Trusted veterinary medicines, vaccines, and feed additives.',
-  heroNote: 'Since 2005 • Damascus, Syria',
-  primaryCta: 'Contact us',
-  siteLanguage: 'en',
-  maxItemsPerPage: 10
-};
+import { DEFAULT_SETTINGS, type SiteSettings } from '@/lib/siteSettings';
 
 const SettingsPage = () => {
-  const [formData, setFormData] = useState<SiteSettings>(defaultSettings);
+  const [formData, setFormData] = useState<SiteSettings>(DEFAULT_SETTINGS);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
 
@@ -34,14 +16,14 @@ const SettingsPage = () => {
       try {
         const res = await fetch('/api/admin/settings', { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to load settings');
-        const data = await res.json();
+        const data: SiteSettings = await res.json();
         setFormData({
-          ...defaultSettings,
-          ...data,
+          ...DEFAULT_SETTINGS,
+          ...data
         });
       } catch (err) {
         console.warn('Using default settings fallback', err);
-        setFormData(defaultSettings);
+        setFormData(DEFAULT_SETTINGS);
       }
     };
     load();

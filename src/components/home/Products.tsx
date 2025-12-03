@@ -5,8 +5,8 @@ import { useLanguage } from '@/context/LanguageContext';
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { partners as seedPartners } from '@/data/partners';
-import type { Product } from '@/app/api/admin/products/route';
-import type { Partner as PartnerModel } from '@/app/api/admin/partners/route';
+import type { Product } from '@/lib/products';
+import type { Partner as PartnerModel } from '@/lib/partners';
 
 const Products = () => {
   const { language } = useLanguage();
@@ -19,7 +19,7 @@ const Products = () => {
       try {
         const res = await fetch('/api/admin/products', { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to fetch products');
-        const data = await res.json();
+        const data: Product[] = await res.json();
         setRemoteProducts(data);
       } catch (e) {
         console.warn('Using fallback partners', e);
@@ -28,7 +28,7 @@ const Products = () => {
       try {
         const res = await fetch('/api/admin/partners', { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to fetch partners');
-        const data = await res.json();
+        const data: PartnerModel[] = await res.json();
         setRemotePartners(data);
       } catch (e) {
         console.warn('Using fallback partners list', e);

@@ -3,49 +3,20 @@
 import React, { useEffect, useState } from 'react';
 import { Mail, Phone, MapPin, Globe, Printer } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
-
-type ContactData = {
-  email: string;
-  emailSecondary?: string;
-  phone?: string;
-  phoneAlt?: string;
-  fax?: string;
-  location?: string;
-  poBox?: string;
-  website?: string;
-  linkedinUrl?: string;
-  facebookUrl?: string;
-  instagramUrl?: string;
-  twitterUrl?: string;
-  showContactForm?: boolean;
-  emailNotifications?: boolean;
-};
+import { defaultContactData, type Contact } from '@/lib/contact';
 
 const Contact = () => {
   const { language } = useLanguage();
   const isArabic = language === 'ar';
 
-  const [contact, setContact] = useState<ContactData>({
-    email: 'vetcaresyria@scs-net.org',
-    emailSecondary: 'vetcaresyria@gmail.com',
-    phone: '00963-11-5852338',
-    phoneAlt: '00963-11-5852339',
-    fax: '00963 -11- 5852340',
-    location: 'Syria, Damascus suburb, Adra industrial city, chemical zone, building No 710',
-    poBox: '8446, Damascus, Syria',
-    website: 'www.vetcaresyria.com',
-    linkedinUrl: '',
-    facebookUrl: '',
-    instagramUrl: '',
-    twitterUrl: ''
-  });
+  const [contact, setContact] = useState<Contact>(defaultContactData);
 
   useEffect(() => {
     const load = async () => {
       try {
         const res = await fetch('/api/admin/contact', { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed contact fetch');
-        const data = await res.json();
+        const data: Contact = await res.json();
         setContact(data);
       } catch (err) {
         console.warn('Using default contact fallback', err);

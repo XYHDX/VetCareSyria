@@ -2,31 +2,9 @@ import { redis } from '@/lib/redis';
 import { NextRequest, NextResponse } from 'next/server';
 import { STORAGE_KEYS } from '@/lib/localStorage';
 import { v4 as uuid } from 'uuid';
-import { partners as partnerSeeds } from '@/data/partners';
 import { setUpdatedAt } from '@/lib/storageMeta';
 import { requireAdmin } from '@/lib/adminAuth';
-
-export interface Product {
-  id: string;
-  name: string;
-  partner: string;
-  category?: string;
-  description?: string;
-  origin?: string;
-  status?: 'available' | 'out-of-stock' | 'coming-soon';
-}
-
-export const DEFAULT_PRODUCTS: Product[] = partnerSeeds.flatMap((partner) =>
-  partner.products.map((product, idx) => ({
-    id: `${partner.id}-${idx}`,
-    name: product,
-    partner: partner.name,
-    category: undefined,
-    description: '',
-    origin: partner.website,
-    status: 'available' as const
-  }))
-);
+import { DEFAULT_PRODUCTS, type Product } from '@/lib/products';
 
 const PRODUCTS_KEY = STORAGE_KEYS.PRODUCTS;
 

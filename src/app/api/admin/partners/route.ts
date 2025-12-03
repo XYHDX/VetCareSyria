@@ -2,25 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 import { STORAGE_KEYS } from '@/lib/localStorage';
 import { v4 as uuid } from 'uuid';
-import { partners as seedPartners } from '@/data/partners';
 import { setUpdatedAt } from '@/lib/storageMeta';
 import { requireAdmin } from '@/lib/adminAuth';
-
-export type Partner = {
-  id: string;
-  name: string;
-  website?: string;
-  logo?: string;
-};
+import { DEFAULT_PARTNERS, type Partner } from '@/lib/partners';
 
 const PARTNERS_KEY = STORAGE_KEYS.PARTNERS;
-export const DEFAULT_PARTNERS: Partner[] = seedPartners.map((p) => ({
-  id: p.id,
-  name: p.name,
-  website: p.website,
-  logo: p.logo
-}));
-
 export async function GET() {
   try {
     const partners = (await redis.get<Partner[]>(PARTNERS_KEY)) || DEFAULT_PARTNERS;

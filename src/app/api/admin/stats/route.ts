@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 import { STORAGE_KEYS } from '@/lib/localStorage';
-import { DEFAULT_PARTNERS, type Partner } from '@/app/api/admin/partners/route';
-import { DEFAULT_PRODUCTS, type Product } from '@/app/api/admin/products/route';
-import { DEFAULT_SETTINGS, type SiteSettings } from '@/app/api/admin/settings/route';
-import { defaultContactData, type Contact } from '@/app/api/admin/contact/route';
 import { getUpdatedAt } from '@/lib/storageMeta';
+import { DEFAULT_PARTNERS, type Partner } from '@/lib/partners';
+import { DEFAULT_PRODUCTS, type Product } from '@/lib/products';
+import { DEFAULT_SETTINGS, type SiteSettings } from '@/lib/siteSettings';
+import { defaultContactData, type Contact } from '@/lib/contact';
 
 type DashboardStats = {
   stats: {

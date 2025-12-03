@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Mail, Phone, MapPin, Globe, Printer } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { getNavLinks } from '@/config/navigation';
+import type { Contact } from '@/lib/contact';
 
 const defaultContact = {
   address: 'Syria, Damascus suburb, Adra industrial city, chemical zone, building No 710',
@@ -27,7 +28,7 @@ const Footer = () => {
       try {
         const res = await fetch('/api/admin/contact', { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to load contact');
-        const data = await res.json();
+        const data: Contact = await res.json();
         setContactDetails((prev) => ({
           ...prev,
           address: data.location || prev.address,

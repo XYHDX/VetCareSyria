@@ -77,10 +77,10 @@ export async function POST(request: NextRequest) {
 
   try {
     console.log('🔍 POST /api/admin/profile: Saving profile data to Redis');
-    const profileData = await request.json() as ProfileData;
+    const incoming = (await request.json()) as ProfileData;
     
     // Validate required fields
-    if (!profileData.name || !profileData.title || !profileData.email) {
+    if (!incoming.name || !incoming.title || !incoming.email) {
       console.error('❌ Missing required fields in profile data');
       return NextResponse.json(
         { error: 'Missing required fields' },
@@ -89,20 +89,20 @@ export async function POST(request: NextRequest) {
     }
 
     const emailPattern = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-    if (!emailPattern.test(profileData.email)) {
+    if (!emailPattern.test(incoming.email)) {
       return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
     }
 
     const clamp = (value: string, max = 300) => value.trim().slice(0, max);
-    profileData = {
-      ...profileData,
-      name: clamp(profileData.name, 150),
-      title: clamp(profileData.title, 150),
-      email: profileData.email.trim().toLowerCase(),
-      phone: clamp(profileData.phone || '', 60),
-      location: clamp(profileData.location || '', 200),
-      summary: clamp(profileData.summary || '', 1200),
-      profileImage: profileData.profileImage?.slice(0, 500)
+    const profileData: ProfileData = {
+      ...incoming,
+      name: clamp(incoming.name, 150),
+      title: clamp(incoming.title, 150),
+      email: incoming.email.trim().toLowerCase(),
+      phone: clamp(incoming.phone || '', 60),
+      location: clamp(incoming.location || '', 200),
+      summary: clamp(incoming.summary || '', 1200),
+      profileImage: incoming.profileImage?.slice(0, 500)
     };
     
     console.log('📝 Profile data to save:', Object.keys(profileData));

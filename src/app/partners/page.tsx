@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { partners as fallbackPartners } from '@/data/partners';
-import type { Product } from '@/app/api/admin/products/route';
-import type { Partner as PartnerModel } from '@/app/api/admin/partners/route';
+import type { Product } from '@/lib/products';
+import type { Partner as PartnerModel } from '@/lib/partners';
 import { useLanguage, LanguageProvider } from '@/context/LanguageContext';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -61,7 +61,7 @@ const PartnersContent = () => {
       try {
         const res = await fetch('/api/admin/products', { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to fetch products');
-        const data = await res.json();
+        const data: Product[] = await res.json();
         setRemoteProducts(data);
       } catch (err) {
         console.warn('Partners page using fallback products', err);
@@ -70,7 +70,7 @@ const PartnersContent = () => {
       try {
         const res = await fetch('/api/admin/partners', { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to fetch partners');
-        const data = await res.json();
+        const data: PartnerModel[] = await res.json();
         setRemotePartners(data);
       } catch (err) {
         console.warn('Partners page using fallback partners list', err);

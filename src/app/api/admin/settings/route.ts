@@ -3,30 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { STORAGE_KEYS } from '@/lib/localStorage'; // Keep for KV key name
 import { setUpdatedAt } from '@/lib/storageMeta';
 import { requireAdmin } from '@/lib/adminAuth';
-
-// Site settings interface
-export interface SiteSettings {
-  siteName: string;
-  siteDescription: string;
-  siteLanguage: string;
-  heroNote?: string;
-  primaryCta?: string;
-  customTheme?: string;
-  maxItemsPerPage: number;
-  analyticsId?: string;
-  customCss?: string;
-}
+import { DEFAULT_SETTINGS, type SiteSettings } from '@/lib/siteSettings';
 
 const REDIS_SETTINGS_KEY = STORAGE_KEYS.SETTINGS;
-export const DEFAULT_SETTINGS: SiteSettings = {
-  siteName: 'VetcareSyria',
-  siteDescription: 'Trusted veterinary medicines, vaccines, and feed additives.',
-  heroNote: 'Since 2005 • Damascus, Syria',
-  primaryCta: 'Contact us',
-  siteLanguage: 'en',
-  customTheme: 'default',
-  maxItemsPerPage: 10
-};
 
 // GET Handler: Fetch settings from Redis
 export async function GET() {
@@ -50,7 +29,7 @@ export async function POST(request: NextRequest) {
   if (auth) return auth;
 
   try {
-    const incoming = await request.json();
+    const incoming = ((await request.json()) ?? {}) as Partial<SiteSettings>;
 
     const settings: SiteSettings = {
       ...DEFAULT_SETTINGS,

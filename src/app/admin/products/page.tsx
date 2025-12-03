@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Plus, Save, Trash2, Package, Globe2, Landmark, Image as ImageIcon } from 'lucide-react';
-import type { Product } from '@/app/api/admin/products/route';
+import type { Product } from '@/lib/products';
 
 const emptyProduct: Product = {
   id: '',
@@ -26,7 +26,7 @@ const ProductsPage = () => {
   const loadProducts = async () => {
     try {
       const res = await fetch('/api/admin/products');
-      const data = await res.json();
+      const data: Product[] = await res.json();
       setProducts(data);
     } catch (err) {
       console.error(err);

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Plus, Save, Trash2, Upload, Globe } from 'lucide-react';
-import type { Partner } from '@/app/api/admin/partners/route';
+import type { Partner } from '@/lib/partners';
 
 const emptyPartner: Partner = {
   id: '',
@@ -23,7 +23,7 @@ const PartnersPage = () => {
   const loadPartners = async () => {
     try {
       const res = await fetch('/api/admin/partners');
-      const data = await res.json();
+      const data: Partner[] = await res.json();
       setPartners(data);
     } catch (err) {
       console.error(err);
@@ -100,7 +100,7 @@ const PartnersPage = () => {
         body: formData
       });
       if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
+      const data: { url?: string } = await res.json();
       if (data?.url) {
         setEditing((prev) => ({ ...prev, logo: data.url }));
       } else {

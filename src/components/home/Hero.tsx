@@ -3,23 +3,16 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
-
-type Settings = {
-  siteName: string;
-  siteDescription: string;
-  heroNote?: string;
-  primaryCta?: string;
-};
+import { DEFAULT_SETTINGS, type SiteSettings } from '@/lib/siteSettings';
 
 const Hero = () => {
   const { language } = useLanguage();
   const isArabic = language === 'ar';
 
-  const [settings, setSettings] = useState<Settings>({
-    siteName: 'VetcareSyria',
-    siteDescription: 'Trusted veterinary medicines, vaccines, and feed additives.',
-    heroNote: isArabic ? 'منذ 2005 • دمشق، سوريا' : 'Since 2005 • Damascus, Syria',
-    primaryCta: isArabic ? 'تواصل معنا' : 'Contact us'
+  const [settings, setSettings] = useState<SiteSettings>({
+    ...DEFAULT_SETTINGS,
+    heroNote: isArabic ? 'منذ 2005 • دمشق، سوريا' : DEFAULT_SETTINGS.heroNote,
+    primaryCta: isArabic ? 'تواصل معنا' : DEFAULT_SETTINGS.primaryCta
   });
 
   useEffect(() => {
@@ -27,7 +20,7 @@ const Hero = () => {
       try {
         const res = await fetch('/api/admin/settings', { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed settings fetch');
-        const data = await res.json();
+        const data: SiteSettings = await res.json();
         setSettings((prev) => ({
           ...prev,
           ...data,
