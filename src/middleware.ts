@@ -5,12 +5,8 @@ export const config = {
 }
 
 export function middleware(req: NextRequest) {
-  console.log('--- Middleware triggered for:', req.nextUrl.pathname); // DEBUG
-
   const basicAuth = req.headers.get('authorization')
   const url = req.nextUrl
-
-  console.log('Authorization header:', basicAuth); // DEBUG
 
   if (basicAuth) {
     const authValue = basicAuth.split(' ')[1]
@@ -20,12 +16,8 @@ export function middleware(req: NextRequest) {
       ? Buffer.from(authValue, 'base64').toString().split(':')
       : atob(authValue).split(':') // Fallback for environments like Cloudflare Workers Edge
 
-    console.log('Decoded credentials:', { user, pwd }); // DEBUG
-
     const expectedUser = process.env.BASIC_AUTH_USER
     const expectedPassword = process.env.BASIC_AUTH_PASSWORD
-
-    console.log('Expected credentials from env:', { expectedUser, expectedPassword }); // DEBUG
 
     // Check for environment variables first
     if (!expectedUser || !expectedPassword) {
@@ -38,13 +30,10 @@ export function middleware(req: NextRequest) {
 
     // Validate credentials
     if (user === expectedUser && pwd === expectedPassword) {
-      console.log('--- Authentication successful ---'); // DEBUG
       return NextResponse.next()
     } else {
-      console.log('--- Authentication failed: Credentials mismatch ---'); // DEBUG
+      console.warn('Basic auth failed for admin route access attempt.')
     }
-  } else {
-    console.log('--- No basic auth header found, requesting auth ---'); // DEBUG
   }
 
   // Request Basic Authentication

@@ -1,6 +1,7 @@
 import { redis } from '@/lib/redis'; // Import the shared Redis client
 import { NextRequest, NextResponse } from 'next/server';
 import { STORAGE_KEYS } from '@/lib/localStorage'; // Keep for KV key name
+import { requireAdmin } from '@/lib/adminAuth';
 
 // Profile interface
 interface ProfileData {
@@ -21,10 +22,10 @@ const defaultProfile: ProfileData = {
   phone: '+963 956 633 888',
   location: 'Masaken Barzeh, Damascus, Syria',
   summary: 'Results-driven IT Engineer and Robotics Specialist with over 3 years of experience leading teams, designing robotic systems, and optimizing IT infrastructures. Demonstrated success in mentoring junior engineers and students, and recognized for implementing robust IT solutions. Skilled in emerging technologies and cross-functional collaboration to drive innovation.',
-  profileImage: '/images/profile-pic.png'
+  profileImage: '/images/profile-placeholder.svg'
 };
 
-// GET Handler: Fetch profile data from Redis
+// GET Handler: Fetch profile data from Redis (public read, admin writes guarded)
 export async function GET() {
   try {
     console.log('🔍 GET /api/admin/profile: Fetching profile data from Redis');
@@ -71,6 +72,9 @@ export async function GET() {
 
 // POST Handler: Save profile data to Redis
 export async function POST(request: NextRequest) {
+  const auth = requireAdmin(request);
+  if (auth) return auth;
+
   try {
     console.log('🔍 POST /api/admin/profile: Saving profile data to Redis');
     const profileData = await request.json() as ProfileData;
@@ -83,6 +87,23 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const emailPattern = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+    if (!emailPattern.test(profileData.email)) {
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
+    }
+
+    const clamp = (value: string, max = 300) => value.trim().slice(0, max);
+    profileData = {
+      ...profileData,
+      name: clamp(profileData.name, 150),
+      title: clamp(profileData.title, 150),
+      email: profileData.email.trim().toLowerCase(),
+      phone: clamp(profileData.phone || '', 60),
+      location: clamp(profileData.location || '', 200),
+      summary: clamp(profileData.summary || '', 1200),
+      profileImage: profileData.profileImage?.slice(0, 500)
+    };
     
     console.log('📝 Profile data to save:', Object.keys(profileData));
     if (profileData.profileImage) {

@@ -30,7 +30,7 @@ const ProfileEditor = () => {
     phone: '+963 956 633 888',
     location: 'Masaken Barzeh, Damascus, Syria',
     summary: 'Results-driven IT Engineer and Robotics Specialist with over 3 years of experience leading teams, designing robotic systems, and optimizing IT infrastructures. Demonstrated success in mentoring junior engineers and students, and recognized for implementing robust IT solutions. Skilled in emerging technologies and cross-functional collaboration to drive innovation.',
-    profileImage: '/images/profile-pic.png'
+    profileImage: '/images/profile-placeholder.svg'
   });
 
   const [isSaving, setIsSaving] = useState(false);
@@ -378,7 +378,7 @@ const ProfileEditor = () => {
                         </div>
                       ) : (
                         <Image
-                          src={imagePreview || formData.profileImage || "/images/profile-pic.png"}
+                          src={imagePreview || formData.profileImage || "/images/profile-placeholder.svg"}
                           alt="Profile"
                           fill
                           className="object-cover"

@@ -1,131 +1,99 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { STORAGE_KEYS } from '@/lib/localStorage';
-import useLocalStorage from '@/hooks/useLocalStorage';
+import { useLanguage } from '@/context/LanguageContext';
 
-interface ProfileData {
-  name: string;
-  title: string;
-  summary: string;
-  email?: string;
-  phone?: string;
-  location?: string;
-  profileImage?: string;
-}
+type Settings = {
+  siteName: string;
+  siteDescription: string;
+  heroNote?: string;
+  primaryCta?: string;
+};
 
 const Hero = () => {
-  // Default profile data
-  const defaultProfile: ProfileData = {
-    name: 'Yahya Demeriah',
-    title: 'IT Engineer & Robotics Specialist',
-    summary: 'Results-driven professional with over 3 years of experience leading teams, designing robotic systems, and optimizing IT infrastructures. Passionate about innovation and technology education.',
-    profileImage: '/images/profile-pic.png'
-  };
+  const { language } = useLanguage();
+  const isArabic = language === 'ar';
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [profileData, setProfileData] = useState<ProfileData>(defaultProfile);
-  
-  // Use our custom hook to get profile data from localStorage as fallback
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [localProfileData] = useLocalStorage<ProfileData>(
-    STORAGE_KEYS.PROFILE,
-    defaultProfile
-  );
+  const [settings, setSettings] = useState<Settings>({
+    siteName: 'VetcareSyria',
+    siteDescription: 'Trusted veterinary medicines, vaccines, and feed additives.',
+    heroNote: isArabic ? 'منذ 2005 • دمشق، سوريا' : 'Since 2005 • Damascus, Syria',
+    primaryCta: isArabic ? 'تواصل معنا' : 'Contact us'
+  });
 
-  // Fetch profile data from API
   useEffect(() => {
-    const fetchProfileData = async () => {
+    const load = async () => {
       try {
-        const response = await fetch('/api/admin/profile', {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }
-        });
-        
-        if (response.ok) {
-          const data = await response.json() as Partial<ProfileData>;
-          console.log('Hero: Fetched profile data from API', data ? Object.keys(data) : 'empty data');
-          
-          if (data && typeof data === 'object' && 'name' in data && data.name) {
-            setProfileData(data as ProfileData);
-          } else {
-            console.log('Hero: API returned empty data, using localStorage fallback');
-            setProfileData(localProfileData);
-          }
-        } else {
-          console.log('Hero: API request failed, using localStorage fallback');
-          setProfileData(localProfileData);
-        }
-      } catch (error) {
-        console.error('Hero: Error fetching profile data:', error);
-        setProfileData(localProfileData);
-      } finally {
-        setIsLoading(false);
+        const res = await fetch('/api/admin/settings', { cache: 'no-store' });
+        if (!res.ok) throw new Error('Failed settings fetch');
+        const data = await res.json();
+        setSettings((prev) => ({
+          ...prev,
+          ...data,
+          heroNote: data.heroNote || prev.heroNote,
+          primaryCta: data.primaryCta || prev.primaryCta
+        }));
+      } catch (err) {
+        console.warn('Using default settings fallback', err);
       }
     };
+    load();
+  }, [isArabic]);
 
-    fetchProfileData();
-  }, [localProfileData]);
+  const headline = isArabic
+    ? `${settings.siteName} — أدوية ولقاحات وإضافات علفية موثوقة.`
+    : `${settings.siteName} — ${settings.siteDescription}`;
 
-  if (isLoading) {
-    return (
-      <div className="py-12 flex justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  // Use profileImage from API if available, otherwise use default
-  const profileImageSrc = profileData.profileImage || '/images/profile-pic.png';
-  console.log('Hero: Using profile image:', profileImageSrc);
+  const subtext = isArabic
+    ? 'تحت قيادة الدكتور هيثم ضميرية والمهندس أنس نشواتي، نوفر منتجات عالية الجودة من شركاء دوليين موثوقين مع دعم فني في معظم المدن السورية وامتثال كامل للوائح الاستيراد البيطرية.'
+    : 'Founded by Dr. Haysam Demeriah and Eng. Anas Al Nachawati, we deliver high-quality products from renowned international partners, backed by technical support across Syrian cities and full compliance with veterinary import regulations.';
 
   return (
-    <section className="py-12 md:py-20 bg-secondary dark:bg-gray-900">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-          {/* Profile Image */}
-          <div className="w-full md:w-2/5 flex justify-center">
-            <div className="relative w-64 h-64 md:w-80 md:h-80 rounded-full overflow-hidden border-4 border-white dark:border-gray-800 shadow-xl">
-              <Image
-                src={profileImageSrc}
-                alt={profileData.name}
-                fill
-                className="object-cover"
-                priority
-              />
-            </div>
+    <section id="home" className="relative overflow-hidden text-slate-900 scroll-mt-28" dir={isArabic ? 'rtl' : 'ltr'}>
+      <div className="absolute inset-0 bg-gradient-to-br from-[#064e3b] via-[#0f766e] to-[#14b8a6]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.15),transparent_35%),radial-gradient(circle_at_80%_15%,rgba(255,255,255,0.12),transparent_28%),radial-gradient(circle_at_50%_80%,rgba(255,255,255,0.1),transparent_32%)]" />
+      <div className="relative container mx-auto px-4 py-16 md:py-24 text-white">
+        <div className="max-w-5xl">
+          {settings.heroNote && (
+            <p className="inline-flex items-center rounded-full bg-white/15 px-4 py-2 text-sm font-semibold ring-1 ring-white/30 backdrop-blur">
+              {settings.heroNote}
+            </p>
+          )}
+          <h1 className="mt-6 text-4xl md:text-6xl font-bold leading-tight font-display tracking-tight drop-shadow-sm">
+            {headline}
+          </h1>
+          <p className="mt-6 text-lg md:text-xl text-emerald-50/90 max-w-3xl leading-relaxed">
+            {subtext}
+          </p>
+          <div className="mt-10 flex flex-wrap gap-4">
+            <Link
+              href="#contact"
+              className="rounded-lg bg-white text-emerald-900 px-6 py-3 font-semibold shadow-lg shadow-emerald-900/20 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-900/30"
+            >
+              {settings.primaryCta || (isArabic ? 'تواصل معنا' : 'Contact us')}
+            </Link>
+            <Link
+              href="#products"
+              className="rounded-lg bg-white/15 px-6 py-3 font-semibold text-white ring-1 ring-white/30 transition hover:bg-white/25 hover:-translate-y-0.5"
+            >
+              {isArabic ? 'استكشف شركاءنا' : 'Explore our partners'}
+            </Link>
           </div>
 
-          {/* Hero Content */}
-          <div className="w-full md:w-3/5 text-center md:text-left">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-4">
-              {profileData.name}
-            </h1>
-            <h2 className="text-xl md:text-2xl text-primary font-medium mb-6">
-              {profileData.title}
-            </h2>
-            <p className="text-gray-700 dark:text-gray-300 text-lg mb-8 max-w-2xl">
-              {profileData.summary}
-            </p>
-            <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-              <Link 
-                href="/contact" 
-                className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-md font-medium transition-colors"
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl">
+            {[
+              isArabic ? 'شركاء عالميون موثوقون' : 'Trusted global partners',
+              isArabic ? 'دعم فني في معظم المدن' : 'Technical support nationwide',
+              isArabic ? 'منتجات معتمدة GMP' : 'GMP-certified products'
+            ].map((item) => (
+              <div
+                key={item}
+                className="rounded-xl bg-white/10 px-4 py-3 text-sm font-semibold ring-1 ring-white/20 backdrop-blur-sm"
               >
-                Contact Me
-              </Link>
-              <Link 
-                href="/experience" 
-                className="bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-primary border border-primary px-6 py-3 rounded-md font-medium transition-colors"
-              >
-                View Experience
-              </Link>
-            </div>
+                {item}
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -1,68 +1,89 @@
 import { Redis } from '@upstash/redis';
+import fs from 'fs/promises';
+import path from 'path';
+
+// In-memory + file-backed fallback store for local development
+type LocalStore = Record<string, unknown>;
+const LOCAL_STORE_PATH = path.join(process.cwd(), '.data', 'local-store.json');
+let localCache: LocalStore | null = null;
+
+const loadLocalStore = async (): Promise<LocalStore> => {
+  if (localCache) return localCache;
+  try {
+    const data = await fs.readFile(LOCAL_STORE_PATH, 'utf8');
+    localCache = JSON.parse(data) as LocalStore;
+  } catch {
+    localCache = {};
+  }
+  return localCache;
+};
+
+const persistLocalStore = async (store: LocalStore) => {
+  await fs.mkdir(path.dirname(LOCAL_STORE_PATH), { recursive: true });
+  await fs.writeFile(LOCAL_STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
+};
+
+const localGet = async <T>(key: string): Promise<T | null> => {
+  const store = await loadLocalStore();
+  return (store[key] as T) ?? null;
+};
+
+const localSet = async <T>(key: string, value: T): Promise<void> => {
+  const store = await loadLocalStore();
+  store[key] = value as unknown;
+  await persistLocalStore(store);
+};
 
 // Create a function that returns a Redis client
 // This ensures the client is only created at runtime, not during build
 let redisClient: Redis | null = null;
+let redisConfigured: boolean | null = null;
 
-export function getRedisClient(): Redis {
-  // Only create the client once
+const isRedisConfigured = () => {
+  if (redisConfigured !== null) return redisConfigured;
+  redisConfigured =
+    !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) ||
+    !!(process.env.UPSTASH_REDIS_KV_REST_API_URL && process.env.UPSTASH_REDIS_KV_REST_API_TOKEN);
+  return redisConfigured;
+};
+
+export function getRedisClient(): Redis | null {
+  if (!isRedisConfigured()) return null;
   if (redisClient) return redisClient;
-  
-  // Function to get configuration based on available environment variables
-  const getConfig = () => {
-    // Check standard Upstash variables
-    if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-      return {
-        url: process.env.UPSTASH_REDIS_REST_URL,
-        token: process.env.UPSTASH_REDIS_REST_TOKEN
-      };
-    }
-    
-    // Check Vercel KV variables
-    if (process.env.UPSTASH_REDIS_KV_REST_API_URL && process.env.UPSTASH_REDIS_KV_REST_API_TOKEN) {
-      return {
-        url: process.env.UPSTASH_REDIS_KV_REST_API_URL,
-        token: process.env.UPSTASH_REDIS_KV_REST_API_TOKEN
-      };
-    }
-    
-    console.error('No Redis environment variables found');
-    return null;
-  };
-  
-  const config = getConfig();
-  
-  // If we have a valid configuration, create the client
-  if (config) {
-    redisClient = new Redis({
-      url: config.url,
-      token: config.token
-    });
-  } else {
-    // Provide a dummy client that logs errors
-    redisClient = {
-      get: async () => {
-        console.error('Redis client not properly initialized');
-        return null;
-      },
-      set: async () => {
-        console.error('Redis client not properly initialized');
-        return null;
-      },
-      // Add other methods as dummy functions as needed
-    } as unknown as Redis;
-  }
-  
+
+  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.UPSTASH_REDIS_KV_REST_API_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.UPSTASH_REDIS_KV_REST_API_TOKEN;
+
+  if (!url || !token) return null;
+
+  redisClient = new Redis({ url, token });
   return redisClient;
 }
 
-// For backward compatibility
+// For backward compatibility with a resilient fallback
 export const redis = {
-  get: async function<T>(key: string): Promise<T | null> {
-    return getRedisClient().get(key);
+  get: async function <T>(key: string): Promise<T | null> {
+    const client = getRedisClient();
+    if (client) {
+      try {
+        return await client.get(key);
+      } catch (err) {
+        console.error('Redis GET failed, falling back to local store:', err);
+      }
+    }
+    return localGet<T>(key);
   },
-  set: async function<T>(key: string, value: T): Promise<unknown> {
-    return getRedisClient().set(key, value);
-  }
+  set: async function <T>(key: string, value: T): Promise<unknown> {
+    const client = getRedisClient();
+    if (client) {
+      try {
+        return await client.set(key, value);
+      } catch (err) {
+        console.error('Redis SET failed, falling back to local store:', err);
+      }
+    }
+    return localSet<T>(key, value);
+  },
+  isConfigured: isRedisConfigured
   // Add other Redis methods you use in your application
-}; 
+};

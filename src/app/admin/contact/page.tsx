@@ -2,26 +2,38 @@
 
 import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Mail, Phone, MapPin, Save, Link as LinkIcon } from 'lucide-react';
+import { Mail, Phone, MapPin, Save, Link as LinkIcon, Printer, Globe } from 'lucide-react';
 import { saveToLocalStorage, getFromLocalStorage, STORAGE_KEYS } from '@/lib/localStorage';
 
 interface ContactFormData {
   email: string;
+  emailSecondary: string;
   phone: string;
+  phoneAlt: string;
+  fax: string;
   location: string;
+  poBox: string;
+  website: string;
   linkedinUrl: string;
-  githubUrl: string;
+  facebookUrl: string;
+  instagramUrl: string;
   showContactForm: boolean;
   emailNotifications: boolean;
 }
 
 // Moved outside the component
 const defaultContactData: ContactFormData = {
-  email: 'yahyademeriah@gmail.com',
-  phone: '+971 58 127 7542',
-  location: 'Dubai, UAE',
-  linkedinUrl: 'https://linkedin.com/in/yahyademeriah',
-  githubUrl: 'https://github.com/yahyademeriah',
+  email: 'vetcaresyria@scs-net.org',
+  emailSecondary: 'vetcaresyria@gmail.com',
+  phone: '00963-11-5852338',
+  phoneAlt: '00963-11-5852339',
+  fax: '00963-11-5852340',
+  location: 'Syria, Damascus suburb, Adra industrial city, chemical zone, building No 710',
+  poBox: '8446, Damascus, Syria',
+  website: 'www.vetcaresyria.com',
+  linkedinUrl: '',
+  facebookUrl: '',
+  instagramUrl: '',
   showContactForm: true,
   emailNotifications: true
 };
@@ -177,8 +189,28 @@ const ContactEditor = () => {
               </div>
 
               <div className="mb-6">
+                <label htmlFor="emailSecondary" className="block text-sm font-medium text-gray-700 mb-1">
+                  Secondary Email
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail size={18} className="text-gray-400" />
+                  </div>
+                  <input
+                    type="email"
+                    id="emailSecondary"
+                    name="emailSecondary"
+                    value={formData.emailSecondary}
+                    onChange={handleChange}
+                    className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-gray-800"
+                    placeholder="Second email"
+                  />
+                </div>
+              </div>
+
+              <div className="mb-6">
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number
+                  Phone Number 1
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -192,6 +224,46 @@ const ContactEditor = () => {
                     onChange={handleChange}
                     className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-gray-800"
                     placeholder="Your phone number"
+                  />
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <label htmlFor="phoneAlt" className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number 2
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Phone size={18} className="text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    id="phoneAlt"
+                    name="phoneAlt"
+                    value={formData.phoneAlt}
+                    onChange={handleChange}
+                    className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-gray-800"
+                    placeholder="Second phone number"
+                  />
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <label htmlFor="fax" className="block text-sm font-medium text-gray-700 mb-1">
+                  Fax
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Printer size={18} className="text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    id="fax"
+                    name="fax"
+                    value={formData.fax}
+                    onChange={handleChange}
+                    className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-gray-800"
+                    placeholder="Fax number"
                   />
                 </div>
               </div>
@@ -215,9 +287,49 @@ const ContactEditor = () => {
                   />
                 </div>
               </div>
+
+              <div className="mb-6">
+                <label htmlFor="poBox" className="block text-sm font-medium text-gray-700 mb-1">
+                  P.O. Box
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Printer size={18} className="text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    id="poBox"
+                    name="poBox"
+                    value={formData.poBox}
+                    onChange={handleChange}
+                    className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-gray-800"
+                    placeholder="e.g. 8446, Damascus, Syria"
+                  />
+                </div>
+              </div>
             </div>
 
             <div>
+              <div className="mb-6">
+                <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
+                  Website
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Globe size={18} className="text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    id="website"
+                    name="website"
+                    value={formData.website}
+                    onChange={handleChange}
+                    className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-gray-800"
+                    placeholder="www.example.com"
+                  />
+                </div>
+              </div>
+
               <div className="mb-6">
                 <label htmlFor="linkedinUrl" className="block text-sm font-medium text-gray-700 mb-1">
                   LinkedIn URL
@@ -239,8 +351,8 @@ const ContactEditor = () => {
               </div>
 
               <div className="mb-6">
-                <label htmlFor="githubUrl" className="block text-sm font-medium text-gray-700 mb-1">
-                  GitHub URL
+                <label htmlFor="facebookUrl" className="block text-sm font-medium text-gray-700 mb-1">
+                  Facebook URL
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -248,12 +360,32 @@ const ContactEditor = () => {
                   </div>
                   <input
                     type="url"
-                    id="githubUrl"
-                    name="githubUrl"
-                    value={formData.githubUrl}
+                    id="facebookUrl"
+                    name="facebookUrl"
+                    value={formData.facebookUrl}
                     onChange={handleChange}
                     className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-gray-800"
-                    placeholder="https://github.com/username"
+                    placeholder="https://facebook.com/yourpage"
+                  />
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <label htmlFor="instagramUrl" className="block text-sm font-medium text-gray-700 mb-1">
+                  Instagram URL
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <LinkIcon size={18} className="text-gray-400" />
+                  </div>
+                  <input
+                    type="url"
+                    id="instagramUrl"
+                    name="instagramUrl"
+                    value={formData.instagramUrl}
+                    onChange={handleChange}
+                    className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-gray-800"
+                    placeholder="https://instagram.com/username"
                   />
                 </div>
               </div>

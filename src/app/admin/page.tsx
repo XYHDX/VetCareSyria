@@ -1,53 +1,71 @@
 'use client';
 
-import React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Clock, Users, Eye, ArrowUp } from 'lucide-react';
+import { Clock, Users, Eye, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 
 interface Stat {
   title: string;
   value: string;
   icon: React.ReactNode;
+  accent: string;
 }
 
-interface Update { 
+interface Update {
   section: string;
-  date: string;
-  status: string;
+  updatedAt: string;
+}
+
+interface ApiStatsResponse {
+  stats: {
+    id: string;
+    title: string;
+    value: string;
+    accent: string;
+  }[];
+  recentUpdates: Update[];
+  lastUpdated?: string;
 }
 
 const AdminDashboard = () => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [stats, _setStats] = useState<Stat[]>([
-    { title: 'Last Updated', value: 'April 9, 2025', icon: <Clock size={24} className="text-gray-600" /> },
-    { title: 'Total Sections', value: '7', icon: <Users size={24} className="text-green-600" /> },
-    { title: 'Site Views', value: '0', icon: <Eye size={24} className="text-purple-600" /> },
-  ]);
-  
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [recentUpdates, _setRecentUpdates] = useState<Update[]>([
-    { section: 'Profile', date: 'April 9, 2025', status: 'Created' },
-    { section: 'Experience', date: 'April 9, 2025', status: 'Created' },
-    { section: 'Education', date: 'April 9, 2025', status: 'Created' },
-  ]);
+  const [stats, setStats] = useState<Stat[]>([]);
+  const [recentUpdates, setRecentUpdates] = useState<Update[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const iconMap: Record<string, React.ReactNode> = useMemo(
+    () => ({
+      partners: <Users size={20} />,
+      products: <Eye size={20} />,
+      site: <Clock size={20} />,
+      contact: <Clock size={20} />
+    }),
+    []
+  );
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch stats and updates from an API
-        // Example:
-        // const statsResponse = await fetch('/api/stats');
-        // const statsData = await statsResponse.json();
-        // setStats(statsData);
+        const res = await fetch('/api/admin/stats', { cache: 'no-store' });
+        if (!res.ok) throw new Error('Failed to fetch stats');
+        const data: ApiStatsResponse = await res.json();
 
-        // const updatesResponse = await fetch('/api/updates');
-        // const updatesData = await updatesResponse.json();
-        // setRecentUpdates(updatesData);
+        setStats(
+          data.stats.map((stat) => ({
+            title: stat.title,
+            value: stat.value,
+            accent: stat.accent,
+            icon: iconMap[stat.id] || <Clock size={20} />
+          }))
+        );
+        setRecentUpdates(data.recentUpdates || []);
+        setError('');
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
-        // Keep using the default data if the API call fails
+        setError('Unable to load dashboard stats right now.');
+      } finally {
+        setLoading(false);
       }
     };
     fetchDashboardData();
@@ -55,110 +73,115 @@ const AdminDashboard = () => {
 
   return (
     <AdminLayout activePage="dashboard">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Welcome to Admin Dashboard</h1>
-        <p className="text-gray-600">Manage and update your CV website content</p>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium text-gray-700">{stat.title}</h2>
-              {stat.icon}
-            </div>
-            <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
+      <div className="bg-white border border-emerald-100 rounded-2xl p-6 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          <div>
+            <p className="text-sm uppercase tracking-[0.2em] text-emerald-700">Overview</p>
+            <h1 className="text-2xl font-bold text-emerald-900">Welcome to the Admin Dashboard</h1>
+            <p className="text-gray-600">Manage and update the VetcareSyria site content.</p>
           </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Quick Actions */}
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900 mb-4 text-gray-800">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Link 
-              href="/admin/profile" 
-              className="bg-blue-50 hover:bg-blue-100 text-blue-700 p-4 rounded-lg flex items-center justify-between transition-colors"
-            >
-              <span>Edit Profile</span>
-              <ArrowUp size={16} className="transform rotate-45" />
-            </Link>
-            <Link 
-              href="/admin/experience" 
-              className="bg-green-50 hover:bg-green-100 text-green-700 p-4 rounded-lg flex items-center justify-between transition-colors"
-            >
-              <span>Update Experience</span>
-              <ArrowUp size={16} className="transform rotate-45" />
-            </Link>
-            <Link 
-              href="/admin/education" 
-              className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 p-4 rounded-lg flex items-center justify-between transition-colors"
-            >
-              <span>Manage Education</span>
-              <ArrowUp size={16} className="transform rotate-45" />
-            </Link>
-            <Link 
-              href="/admin/certifications" 
-              className="bg-pink-50 hover:bg-pink-100 text-pink-700 p-4 rounded-lg flex items-center justify-between transition-colors"
-            >
-              <span>Manage Certifications</span>
-              <ArrowUp size={16} className="transform rotate-45" />
-            </Link>
-            <Link 
-              href="/admin/skills" 
-              className="bg-purple-50 hover:bg-purple-100 text-purple-700 p-4 rounded-lg flex items-center justify-between transition-colors"
-            >
-              <span>Manage Skills</span>
-              <ArrowUp size={16} className="transform rotate-45" />
-            </Link>
-            <Link 
-              href="/admin/achievements" 
-              className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 p-4 rounded-lg flex items-center justify-between transition-colors"
-            >
-              <span>Add Achievements</span>
-              <ArrowUp size={16} className="transform rotate-45" />
-            </Link>
-          </div>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 transition"
+            target="_blank"
+          >
+            Go to site
+            <ArrowUpRight size={18} />
+          </Link>
         </div>
 
-        {/* Recent Updates */}
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900 mb-4 text-gray-800">Recent Updates</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Section
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {recentUpdates.map((update, index) => (
-                  <tr key={index}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {update.section}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {update.date}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        {update.status}
-                      </span>
-                    </td>
+        {error && (
+          <div className="mb-4 rounded-md bg-red-50 text-red-700 px-4 py-2">
+            {error}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {(loading
+            ? [
+                { title: 'Loading', value: '—', icon: <Clock size={20} className="animate-pulse" />, accent: 'bg-emerald-100 text-emerald-800' },
+                { title: 'Loading', value: '—', icon: <Clock size={20} className="animate-pulse" />, accent: 'bg-teal-100 text-teal-800' },
+                { title: 'Loading', value: '—', icon: <Clock size={20} className="animate-pulse" />, accent: 'bg-sky-100 text-sky-800' }
+              ]
+            : stats
+          ).map((stat, index) => (
+            <div
+              key={index}
+              className="rounded-xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm flex items-center gap-4"
+            >
+              <div className={`p-3 rounded-lg ${stat.accent}`}>{stat.icon}</div>
+              <div>
+                <p className="text-sm text-gray-600">{stat.title}</p>
+                <p className="text-2xl font-semibold text-emerald-900">{stat.value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="bg-white border border-emerald-100 rounded-xl p-5 shadow-sm">
+            <h2 className="text-lg font-semibold text-emerald-900 mb-3">Quick Actions</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                { href: '/admin/partners', label: 'Manage Partners' },
+                { href: '/admin/products', label: 'Manage Products' },
+                { href: '/admin/contact', label: 'Contact Details' },
+                { href: '/admin/settings', label: 'Site Settings' },
+              ].map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center justify-between px-4 py-3 rounded-lg border border-emerald-100 hover:border-emerald-300 hover:bg-emerald-50 text-emerald-900 transition"
+                >
+                  <span>{item.label}</span>
+                  <ArrowUpRight size={16} className="text-emerald-700" />
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white border border-emerald-100 rounded-xl p-5 shadow-sm">
+            <h2 className="text-lg font-semibold text-emerald-900 mb-3">Recent Updates</h2>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left text-sm">
+                <thead>
+                  <tr className="text-gray-500">
+                    <th className="py-2 pr-6 font-medium">Section</th>
+                    <th className="py-2 pr-6 font-medium">Date</th>
+                    <th className="py-2 font-medium">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-emerald-100">
+                  {(loading ? [] : recentUpdates).map((update, index) => (
+                    <tr key={index} className="text-gray-800">
+                      <td className="py-3 pr-6 font-medium">{update.section}</td>
+                      <td className="py-3 pr-6 text-gray-600">
+                        {new Date(update.updatedAt).toLocaleString()}
+                      </td>
+                      <td className="py-3">
+                        <span className="inline-flex px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold">
+                          Updated
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {!loading && recentUpdates.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="py-4 text-gray-600">
+                        No updates recorded yet.
+                      </td>
+                    </tr>
+                  )}
+                  {loading && (
+                    <tr>
+                      <td colSpan={3} className="py-4 text-gray-600">
+                        Loading…
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

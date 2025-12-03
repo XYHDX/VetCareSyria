@@ -2,142 +2,126 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Mail, Phone, MapPin, Linkedin, Github } from 'lucide-react';
-import { STORAGE_KEYS } from '@/lib/localStorage';
-import useLocalStorage from '@/hooks/useLocalStorage';
-import { navLinks } from '@/config/navigation';
+import { Mail, Phone, MapPin, Globe, Printer } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
+import { getNavLinks } from '@/config/navigation';
 
-interface ContactData {
-  email: string;
-  phone: string;
-  location: string;
-  linkedinUrl: string;
-  githubUrl: string;
-}
+const defaultContact = {
+  address: 'Syria, Damascus suburb, Adra industrial city, chemical zone, building No 710',
+  poBox: 'P.O. Box 8446, Damascus, Syria',
+  phone: '+963115852338',
+  phoneDisplay: '00963-11-5852338 / 5852339',
+  fax: '+963115852340',
+  emailPrimary: 'vetcaresyria@scs-net.org',
+  emailSecondary: 'vetcaresyria@gmail.com',
+  website: 'www.vetcaresyria.com'
+};
 
 const Footer = () => {
-  // Default contact data
-  const defaultContactData: ContactData = {
-    email: 'yahyademeriah@gmail.com',
-    phone: '+971 58 127 7542',
-    location: 'Dubai, UAE',
-    linkedinUrl: 'https://linkedin.com/in/yahyademeriah',
-    githubUrl: 'https://github.com/yahyademeriah'
-  };
+  const { language } = useLanguage();
+  const isArabic = language === 'ar';
+  const [contactDetails, setContactDetails] = useState(defaultContact);
 
-  // Use our custom hook to get contact data from localStorage as fallback
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [localContactData, , isLocalLoading] = useLocalStorage<ContactData>(
-    STORAGE_KEYS.CONTACT, 
-    defaultContactData
-  );
-  
-  // State for API data
-  const [contactData, setContactData] = useState<ContactData>(defaultContactData);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Fetch contact data from API
   useEffect(() => {
-    const fetchContactData = async () => {
-      setIsLoading(true);
+    const load = async () => {
       try {
-        const response = await fetch('/api/contact/data');
-        if (response.ok) {
-          const data = await response.json() as ContactData;
-          setContactData({
-            ...data,
-            linkedinUrl: data.linkedinUrl || defaultContactData.linkedinUrl,
-            githubUrl: data.githubUrl || defaultContactData.githubUrl
-          });
-        } else {
-          // Fallback to localStorage if API fails
-          setContactData(localContactData);
-        }
-      } catch (error) {
-        console.error('Error fetching contact data for footer:', error);
-        // Fallback to localStorage if API fails
-        setContactData(localContactData);
-      } finally {
-        setIsLoading(false);
+        const res = await fetch('/api/admin/contact', { cache: 'no-store' });
+        if (!res.ok) throw new Error('Failed to load contact');
+        const data = await res.json();
+        setContactDetails((prev) => ({
+          ...prev,
+          address: data.location || prev.address,
+          phone: data.phone || prev.phone,
+          phoneDisplay: data.phone || prev.phoneDisplay,
+          emailPrimary: data.email || prev.emailPrimary
+        }));
+      } catch (err) {
+        console.warn('Footer using default contact', err);
       }
     };
-
-    fetchContactData();
-  }, [localContactData]);
-
-  if (isLoading) {
-    return null; // Don't render anything while loading
-  }
+    load();
+  }, []);
 
   return (
-    <footer className="bg-gray-900 dark:bg-gray-950 text-white py-12">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Contact Information */}
+    <footer className="relative overflow-hidden text-white py-12" dir={isArabic ? 'rtl' : 'ltr'}>
+      <div className="absolute inset-0 bg-gradient-to-br from-[#064e3b] via-[#0f766e] to-[#14b8a6]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.12),transparent_32%),radial-gradient(circle_at_80%_15%,rgba(255,255,255,0.1),transparent_26%),radial-gradient(circle_at_50%_80%,rgba(255,255,255,0.08),transparent_30%)]" />
+      <div className="relative container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           <div>
-            <h3 className="text-xl font-semibold mb-4">Contact</h3>
-            <ul className="space-y-3">
-              <li className="flex items-center">
-                <Mail size={18} className="mr-3 text-blue-500" />
-                <a href={`mailto:${contactData.email}`} className="hover:text-blue-400 transition-colors">
-                  {contactData.email}
-                </a>
+            <h3 className="text-xl font-semibold mb-4">
+              {isArabic ? 'السورية للرعاية البيطرية' : 'VetcareSyria'}
+            </h3>
+            <p className="text-emerald-100 leading-relaxed">
+              {isArabic
+                ? 'منذ 2005 نوفر أدوية ولقاحات وإضافات علفية موثوقة مدعومة بخبرة فنية والتزام باللوائح السورية.'
+                : 'Since 2005, VetcareSyria has supplied veterinarians and livestock producers with trusted medicines, vaccines, and feed additives backed by technical expertise and compliance.'}
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-xl font-semibold mb-4">{isArabic ? 'التواصل' : 'Contact'}</h3>
+            <ul className="space-y-3 text-emerald-50">
+              <li className="flex items-start gap-3">
+                <MapPin className="mt-1 h-5 w-5 text-emerald-300" />
+                <span>{isArabic ? 'سوريا، ضواحي دمشق، المدينة الصناعية بعدرا، المنطقة الكيماوية، مبنى 710' : contactDetails.address}</span>
               </li>
-              <li className="flex items-center">
-                <Phone size={18} className="mr-3 text-blue-500" />
-                <a href={`tel:${contactData.phone}`} className="hover:text-blue-400 transition-colors">
-                  {contactData.phone}
-                </a>
+              <li className="flex items-start gap-3">
+                <Printer className="mt-1 h-5 w-5 text-emerald-300" />
+                <span>{contactDetails.poBox}</span>
               </li>
-              <li className="flex items-start">
-                <MapPin size={18} className="mr-3 mt-1 text-blue-500" />
-                <span>{contactData.location}</span>
+              <li className="flex items-start gap-3">
+                <Phone className="mt-1 h-5 w-5 text-emerald-300" />
+                <div>
+                  <a href={`tel:${contactDetails.phone}`} className="hover:text-white transition-colors">
+                    {contactDetails.phoneDisplay}
+                  </a>
+                  <div className="text-sm text-emerald-200">
+                    {isArabic ? 'فاكس:' : 'Fax:'} {contactDetails.fax.replace('+', '')}
+                  </div>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <Mail className="mt-1 h-5 w-5 text-emerald-300" />
+                <div className="flex flex-col">
+                  <a href={`mailto:${contactDetails.emailPrimary}`} className="hover:text-white transition-colors">
+                    {contactDetails.emailPrimary}
+                  </a>
+                  <a href={`mailto:${contactDetails.emailSecondary}`} className="hover:text-white transition-colors">
+                    {contactDetails.emailSecondary}
+                  </a>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <Globe className="mt-1 h-5 w-5 text-emerald-300" />
+                <a
+                  href={`https://${contactDetails.website}`}
+                  className="hover:text-white transition-colors"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {contactDetails.website}
+                </a>
               </li>
             </ul>
           </div>
 
-          {/* Quick Links */}
           <div>
-            <h3 className="text-xl font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              {navLinks.map((link) => (
+            <h3 className="text-xl font-semibold mb-4">{isArabic ? 'روابط' : 'Navigate'}</h3>
+            <ul className="space-y-2 text-emerald-50">
+              {getNavLinks(isArabic).map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="hover:text-blue-400 transition-colors">
+                  <Link href={link.href} className="hover:text-white transition-colors">
                     {link.label}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
-
-          {/* Connect */}
-          <div>
-            <h3 className="text-xl font-semibold mb-4">Connect</h3>
-            <div className="flex space-x-4">
-              <a 
-                href={contactData.linkedinUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="bg-gray-800 hover:bg-blue-600 p-3 rounded-full transition-colors"
-                aria-label="LinkedIn"
-              >
-                <Linkedin size={20} />
-              </a>
-              <a 
-                href={contactData.githubUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="bg-gray-800 hover:bg-blue-600 p-3 rounded-full transition-colors"
-                aria-label="GitHub"
-              >
-                <Github size={20} />
-              </a>
-            </div>
-          </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-          <p>&copy; {new Date().getFullYear()} Yahya Demeriah. All rights reserved.</p>
+        <div className="border-t border-white/20 mt-10 pt-6 text-center text-emerald-100">
+          <p>&copy; {new Date().getFullYear()} VetcareSyria. {isArabic ? 'جميع الحقوق محفوظة.' : 'All rights reserved.'}</p>
         </div>
       </div>
     </footer>
