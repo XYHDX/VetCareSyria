@@ -1,44 +1,51 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server';
+import { jwtVerify } from 'jose';
+
+const AUTH_SECRET = process.env.AUTH_SECRET || 'fallback-secret-change-me';
 
 export const config = {
-  matcher: '/admin/:path*',
-}
+  matcher: ['/admin/:path*', '/login'],
+};
 
-export function middleware(req: NextRequest) {
-  const basicAuth = req.headers.get('authorization')
-  const url = req.nextUrl
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+  const adminSession = req.cookies.get('admin_session')?.value;
 
-  // If basic auth env vars are not set, skip the middleware to avoid blocking access.
-  const expectedUser = process.env.BASIC_AUTH_USER
-  const expectedPassword = process.env.BASIC_AUTH_PASSWORD
-  if (!expectedUser || !expectedPassword) {
-    console.warn('Basic Auth not configured; skipping admin auth middleware.')
-    return NextResponse.next()
+  // 1. If trying to access /login page
+  if (pathname === '/login') {
+    if (adminSession) {
+      try {
+        // Verify token. If valid, redirect to /admin
+        await jwtVerify(adminSession, new TextEncoder().encode(AUTH_SECRET));
+        return NextResponse.redirect(new URL('/admin', req.url));
+      } catch (err) {
+        // Token invalid/expired, let them stay on /login (and maybe clear cookie?)
+        const response = NextResponse.next();
+        response.cookies.delete('admin_session');
+        return response;
+      }
+    }
+    // No session, allow access to /login
+    return NextResponse.next();
   }
 
-  if (basicAuth) {
-    const authValue = basicAuth.split(' ')[1]
-    // Decode base64 credentials
-    // Added Buffer check for environments where it might not be globally available
-    const [user, pwd] = typeof Buffer !== 'undefined' 
-      ? Buffer.from(authValue, 'base64').toString().split(':')
-      : atob(authValue).split(':') // Fallback for environments like Cloudflare Workers Edge
+  // 2. If trying to access protected /admin routes
+  if (pathname.startsWith('/admin')) {
+    if (!adminSession) {
+      return NextResponse.redirect(new URL('/login', req.url));
+    }
 
-    // Validate credentials
-    if (user === expectedUser && pwd === expectedPassword) {
-      return NextResponse.next()
-    } else {
-      console.warn('Basic auth failed for admin route access attempt.')
+    try {
+      await jwtVerify(adminSession, new TextEncoder().encode(AUTH_SECRET));
+      return NextResponse.next();
+    } catch (err) {
+      // Token invalid/expired
+      const response = NextResponse.redirect(new URL('/login', req.url));
+      response.cookies.delete('admin_session');
+      return response;
     }
   }
 
-  // Request Basic Authentication
-  url.pathname = '/api/auth_error' // Redirect to an error route or return directly
-  // Returning a 401 response directly to prompt for credentials
-  return new NextResponse('Authentication required', {
-    status: 401,
-    headers: {
-      'WWW-Authenticate': 'Basic realm="Secure Area"',
-    },
-  })
-} 
+  return NextResponse.next();
+}
+
